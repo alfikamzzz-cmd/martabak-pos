@@ -1,0 +1,1214 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#3a2318">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Martabak POS">
+<title>Martabak POS</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+:root{
+  --bg:#f6f1e7; --ink:#2b1b14; --muted:#7a6a5f; --card:#fffdf8; --line:#e4dac8;
+  --butter:#f2c230; --choco:#3a2318; --green:#1f7a4d; --red:#b3402a;
+  font-family:"Trebuchet MS","Segoe UI",system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0}
+body{background:var(--bg);color:var(--ink);min-height:100vh;padding-bottom:90px}
+header{background:var(--choco);color:var(--butter);padding:14px 16px;font-size:1.2rem;font-weight:700}
+nav{display:flex;background:var(--choco);padding:0 8px;position:sticky;top:0;z-index:5}
+nav button{flex:1;background:none;border:0;color:#d8c7b4;padding:12px 2px;font:inherit;font-size:.85rem;border-bottom:3px solid transparent;cursor:pointer}
+nav button.on{color:#fff;border-color:var(--butter);font-weight:700}
+main{max-width:760px;margin:0 auto;padding:14px}
+section{display:none}section.on{display:block}
+h2{font-size:1rem;margin:16px 0 8px;color:var(--muted)}
+h3{margin-bottom:6px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.item{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px;text-align:left;cursor:pointer;font:inherit;color:inherit;position:relative}
+.item:active{transform:scale(.97)}
+.item b{display:block;margin-bottom:4px}
+.item span{color:var(--muted);font-size:.9rem}
+.item .badge{position:absolute;top:8px;right:8px;background:var(--choco);color:var(--butter);border-radius:99px;min-width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700}
+.tag{display:inline-block;font-size:.72rem;padding:2px 7px;border-radius:99px;margin-bottom:6px}
+.manis{background:#fbe3a0}.asin{background:#cfe6d8}
+.chips{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+.chip{padding:7px 14px;border-radius:99px;border:1px solid var(--line);background:var(--card);font:inherit;cursor:pointer}
+.chip.on{background:var(--choco);color:var(--butter);border-color:var(--choco)}
+.cart{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 12px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px dashed var(--line)}
+.row:last-child{border:0}
+.qty{display:flex;align-items:center;gap:8px}
+.qty button{width:30px;height:30px;border-radius:50%;border:1px solid var(--line);background:#fff;font-size:1.1rem;cursor:pointer}
+.line{display:flex;justify-content:space-between;margin:6px 0}
+.total{display:flex;justify-content:space-between;font-size:1.2rem;font-weight:700;margin:10px 0}
+.btn{width:100%;padding:14px;border:0;border-radius:10px;background:var(--butter);color:var(--choco);font:inherit;font-weight:700;font-size:1rem;cursor:pointer}
+.btn.alt{background:var(--card);border:1px solid var(--line);margin-top:8px;color:var(--ink)}
+.btn.green{background:var(--green);color:#fff}
+.btn.danger{color:var(--red)}
+.btn:disabled{opacity:.4}
+.pay{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
+.pay label{border:2px solid var(--line);border-radius:10px;padding:12px;text-align:center;cursor:pointer;background:var(--card)}
+.pay input{display:none}
+.pay label:has(input:checked){border-color:var(--butter);background:#fff6d6;font-weight:700}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px}
+.stat small{color:var(--muted)}.stat div{font-size:1.2rem;font-weight:700}
+.stat.profit div{color:var(--green)}.stat.loss div{color:var(--red)}
+.stat.wide{grid-column:1/-1}
+table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);font-size:.9rem}
+th,td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:#efe6d3}
+td.r,th.r{text-align:right}
+.scroll{overflow-x:auto;border-radius:10px}
+input[type=text],input[type=number],input[type=date],textarea,select{width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font:inherit;background:#fff}
+textarea{min-height:90px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.menu-edit{display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:6px;margin-bottom:12px}
+.menu-edit .resepbtn{grid-column:1/-1;margin:0;padding:9px;font-size:.88rem;font-weight:600}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;padding:16px;z-index:20}
+.modal.on{display:flex}
+.modal .box{background:#fff;border-radius:14px;padding:18px;max-width:380px;width:100%;text-align:center;max-height:92vh;overflow:auto}
+#qrBox{display:flex;justify-content:center;margin:12px 0}
+.note{font-size:.85rem;color:var(--muted);margin-top:6px}
+.err{color:var(--red)}
+.bar{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);padding:10px 14px;display:none;z-index:6}
+.bar.on{display:block}
+.bar .btn{max-width:760px;margin:0 auto;display:block}
+.struk{text-align:left;font-family:"Courier New",monospace;font-size:.85rem}
+.struk .c{text-align:center}
+.struk hr{border:0;border-top:1px dashed #999;margin:8px 0}
+.struk .l{display:flex;justify-content:space-between;gap:8px}
+.legend{display:flex;gap:14px;font-size:.8rem;color:var(--muted);margin:4px 0}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px}
+.updbar{position:fixed;top:0;left:0;right:0;z-index:30;background:var(--butter);color:var(--choco);padding:max(8px,env(safe-area-inset-top)) 12px 8px;display:flex;gap:8px;align-items:center;font-size:.88rem;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.updbar[hidden]{display:none}
+.updbar span{flex:1}
+.updbar button{border:0;border-radius:8px;padding:8px 12px;font:inherit;font-weight:700;cursor:pointer}
+.updbar .btnUpd{background:var(--choco);color:var(--butter)}
+.updbar #updNanti{background:none;font-size:1rem;padding:6px}
+.updwajib{position:fixed;inset:0;background:rgba(43,27,20,.96);z-index:60;display:flex;align-items:center;justify-content:center;padding:20px}
+.updwajib[hidden]{display:none}
+.updwajib .box{background:#fff;border-radius:14px;padding:22px;max-width:360px;width:100%;text-align:center}
+.lbl{display:block;font-size:.85rem;color:var(--muted);margin:10px 0 4px}
+.warnbar{background:#fff0d6;border:1px solid var(--butter);color:#7a4a00;border-radius:10px;padding:8px 12px;font-size:.88rem;margin-bottom:10px;cursor:pointer}
+.item .sisa{display:block;font-size:.75rem;margin-top:4px;color:var(--muted)}
+.item .sisa.tipis{color:#a86a00;font-weight:700}
+.item .sisa.habis{color:var(--red);font-weight:700}
+td.low{color:var(--red);font-weight:700}
+.syncbar{font-size:.8rem;text-align:center;padding:5px 8px;background:#e5f2ea;color:var(--green)}
+.syncbar.err{background:#fbe5df;color:var(--red)}
+@media print{
+  body>*:not(#modal){display:none!important}
+  .modal{position:static;background:none;display:block;padding:0}
+  .modal .box{max-width:none;box-shadow:none;padding:0}
+  .noprint{display:none!important}
+}
+</style>
+</head>
+<body>
+<header id="judul">🫓 Martabak POS</header>
+<nav>
+  <button class="on" data-tab="kasir">Kasir</button>
+  <button data-tab="stok">Stok</button>
+  <button data-tab="biaya">Biaya</button>
+  <button data-tab="rekap">Rekap</button>
+  <button data-tab="atur">Atur</button>
+</nav>
+<div class="syncbar" id="syncBar" hidden></div>
+
+<main>
+  <!-- KASIR -->
+  <section id="kasir" class="on">
+    <div class="warnbar" id="stokWarn" hidden></div>
+    <h2>Pilih menu</h2>
+    <div class="chips" id="filter">
+      <button class="chip on" data-f="semua">Semua</button>
+      <button class="chip" data-f="manis">Manis</button>
+      <button class="chip" data-f="asin">Asin</button>
+    </div>
+    <div id="menuGrid" class="grid"></div>
+
+    <h2>Pesanan</h2>
+    <div class="cart" id="cart"></div>
+    <div class="two" style="margin-top:8px">
+      <input type="text" id="pelanggan" placeholder="Nama pelanggan (opsional)">
+      <input type="number" id="diskon" inputmode="numeric" placeholder="Diskon (Rp)">
+    </div>
+    <input type="text" id="catatan" placeholder="Catatan pesanan, mis. pedas, tanpa wijen" style="margin-top:8px">
+    <div class="line"><span>Subtotal</span><span id="subtotal">Rp0</span></div>
+    <div class="total"><span>Total</span><span id="total">Rp0</span></div>
+    <div class="pay">
+      <label><input type="radio" name="pay" value="Tunai" checked><span>💵 Tunai</span></label>
+      <label><input type="radio" name="pay" value="QRIS"><span>📱 QRIS</span></label>
+    </div>
+    <button class="btn" id="btnBayar" disabled>Proses pembayaran</button>
+    <button class="btn alt" id="btnKosong">Kosongkan pesanan</button>
+  </section>
+
+  <!-- STOK -->
+  <section id="stok">
+    <div id="stokPeringatan"></div>
+    <h2>Stok bahan</h2>
+    <div class="scroll"><table id="tblBahan"></table></div>
+    <button class="btn" id="btnBahanBaru" style="margin-top:10px">+ Tambah bahan</button>
+    <p class="note">Tips: pakai satuan kecil agar resep mudah, misalnya gram, ml, butir. Isi harga per satuan (tepung Rp12.000 per kg = Rp12 per gram).</p>
+    <h2>HPP per menu</h2>
+    <div class="scroll"><table id="tblHpp"></table></div>
+    <p class="note">Atur resep tiap menu di tab Atur, bagian Daftar menu, tombol Resep.</p>
+  </section>
+
+  <!-- BIAYA -->
+  <section id="biaya">
+    <h2>Catat pengeluaran</h2>
+    <div class="two">
+      <input type="date" id="expTgl">
+      <select id="expKat">
+        <option>Bahan baku</option><option>Gas / listrik</option><option>Gaji</option>
+        <option>Sewa</option><option>Kemasan</option><option>Lainnya</option>
+      </select>
+    </div>
+    <input type="number" id="expNominal" inputmode="numeric" placeholder="Nominal (Rp)" style="margin-top:8px">
+    <input type="text" id="expCatatan" placeholder="Catatan (opsional)" style="margin-top:8px">
+    <button class="btn alt" id="btnExpTambah" style="margin-top:8px">+ Tambah ke daftar</button>
+    <div id="draftBox" hidden>
+      <h2>Daftar yang akan disimpan</h2>
+      <div class="cart" id="draftList"></div>
+      <div class="total"><span>Total</span><span id="draftTotal">Rp0</span></div>
+    </div>
+    <button class="btn" id="btnExp" style="margin-top:8px">Simpan pengeluaran</button>
+    <p class="note" id="expMsg"></p>
+    <h2>Pengeluaran pada tanggal ini</h2>
+    <div class="stat wide" style="margin-bottom:10px"><small>Total</small><div id="expTotal">Rp0</div></div>
+    <div class="scroll"><table id="tblExp"></table></div>
+  </section>
+
+  <!-- REKAP -->
+  <section id="rekap">
+    <h2>Periode</h2>
+    <div class="chips" id="periode">
+      <button class="chip on" data-p="hari">Hari ini</button>
+      <button class="chip" data-p="7">7 hari</button>
+      <button class="chip" data-p="bulan">Bulan ini</button>
+      <button class="chip" data-p="kustom">Pilih tanggal</button>
+    </div>
+    <div class="two" id="kustomBox" style="display:none;margin-bottom:8px">
+      <input type="date" id="dari"><input type="date" id="sampai">
+    </div>
+    <div class="stats" id="stats"></div>
+
+    <div id="chartWrap">
+      <h2>Omzet dan pengeluaran per hari</h2>
+      <div class="legend"><span><i style="background:#d99a1c"></i>Omzet</span><span><i style="background:#b3402a"></i>Pengeluaran</span></div>
+      <div id="chart" class="scroll"></div>
+    </div>
+
+    <h2>Terjual per menu</h2>
+    <div class="scroll"><table id="tblItem"></table></div>
+    <h2>Riwayat transaksi</h2>
+    <div class="scroll"><table id="tblTrx"></table></div>
+    <button class="btn alt" id="btnCsv">Unduh data (CSV)</button>
+  </section>
+
+  <!-- ATUR -->
+  <section id="atur">
+    <h2>Info toko (tampil di struk)</h2>
+    <input type="text" id="setNama" placeholder="Nama toko">
+    <input type="text" id="setAlamat" placeholder="Alamat / no. HP" style="margin-top:8px">
+    <input type="text" id="setFooter" placeholder="Pesan di struk, mis. Terima kasih!" style="margin-top:8px">
+    <button class="btn" id="btnSimpanToko" style="margin-top:8px">Simpan info toko</button>
+
+    <h2>Daftar menu</h2>
+    <div id="menuEdit"></div>
+    <button class="btn alt" id="btnTambah">+ Tambah menu</button>
+    <button class="btn" id="btnSimpanMenu" style="margin-top:8px">Simpan menu</button>
+
+    <h2>QRIS toko</h2>
+    <p class="note">Cara 1 (disarankan): tempel teks QRIS statis toko Anda. Aplikasi membuat QRIS dengan nominal otomatis sesuai total. Scan QRIS toko dengan pemindai QR biasa, lalu salin hasilnya (diawali 000201...).</p>
+    <textarea id="qrisStr" placeholder="000201010211..."></textarea>
+    <button class="btn" id="btnSimpanQris" style="margin-top:8px">Simpan QRIS</button>
+    <p class="note" id="qrisMsg"></p>
+    <p class="note" style="margin-top:14px">Cara 2: unggah gambar QRIS toko (nominal diisi sendiri oleh pembeli).</p>
+    <input type="file" id="qrisImg" accept="image/*">
+
+    <h2>Google Sheet</h2>
+    <p class="note">Simpan transaksi, pengeluaran, dan menu ke Google Sheet Anda. Lihat panduan untuk membuat link dan kata sandi.</p>
+    <input type="text" id="syncUrl" placeholder="Link Web App (https://script.google.com/macros/s/.../exec)">
+    <input type="text" id="syncToken" placeholder="Kata sandi (sama dengan di skrip)" style="margin-top:8px">
+    <label style="display:flex;gap:8px;align-items:center;margin-top:10px"><input type="checkbox" id="syncAuto" style="width:auto"> Kirim otomatis setiap ada data baru</label>
+    <button class="btn" id="btnSimpanSync" style="margin-top:8px">Simpan dan tes koneksi</button>
+    <button class="btn alt" id="btnKirimSemua">Kirim semua data ke Sheet</button>
+    <button class="btn alt" id="btnAmbil">Ambil data dari Sheet</button>
+    <p class="note" id="syncInfo"></p>
+
+    <h2>Cadangan data</h2>
+    <button class="btn alt" id="btnBackup">Unduh cadangan (JSON)</button>
+    <button class="btn alt" id="btnRestoreBtn">Pulihkan dari cadangan</button>
+    <input type="file" id="restoreFile" accept="application/json" style="display:none">
+
+    <h2>Aplikasi</h2>
+    <p class="note" style="margin-top:0">Versi terpasang: <b id="verApp"></b></p>
+    <button class="btn alt" id="btnCekUpdate">Cek pembaruan</button>
+    <button class="btn alt" id="btnInstall" style="display:none">Pasang di layar utama</button>
+    <button class="btn alt danger" id="btnReset">Hapus semua transaksi dan pengeluaran</button>
+  </section>
+</main>
+
+<div class="updbar" id="updBar" hidden><span id="updTeks"></span><button class="btnUpd">Perbarui</button><button id="updNanti" aria-label="Nanti">✕</button></div>
+<div class="updwajib" id="updWajib" hidden><div class="box"><div style="font-size:2.4rem">🔄</div><h3>Pembaruan diperlukan</h3><p id="updWajibTeks" class="note" style="margin:8px 0 14px"></p><button class="btn btnUpd">Perbarui sekarang</button></div></div>
+
+<div class="bar" id="bar"><button class="btn" id="btnBarBayar"></button></div>
+<div class="modal" id="modal"><div class="box" id="modalBox"></div></div>
+
+<script>
+/* ---------- Penyimpanan ---------- */
+const DEFAULT_MENU=[
+  {id:1,nama:"Coklat Keju",jenis:"manis",harga:30000},
+  {id:2,nama:"Kacang Susu",jenis:"manis",harga:28000},
+  {id:3,nama:"Spesial Mix",jenis:"manis",harga:40000},
+  {id:4,nama:"Ayam",jenis:"asin",harga:35000},
+  {id:5,nama:"Daging Sapi",jenis:"asin",harga:45000},
+  {id:6,nama:"Telur Bebek",jenis:"asin",harga:50000},
+];
+const DEFAULT_SET={nama:"Martabak Saya",alamat:"",footer:"Terima kasih, selamat menikmati!"};
+const load=(k,d)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch{return d}};
+const save=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){alert("Gagal menyimpan data: "+e.message)}};
+
+let menu=load("mb_menu",DEFAULT_MENU);
+let trx=load("mb_trx",[]);
+let exp=load("mb_exp",[]);
+let setting=load("mb_set",DEFAULT_SET);
+let qrisStatic=load("mb_qris","");
+let qrisImg=load("mb_qrisimg","");
+let bahan=load("mb_bahan",[]);
+let cart={};
+let filterJenis="semua";
+let periode="hari";
+
+const rp=n=>(n<0?"-":"")+"Rp"+Math.abs(Number(n)).toLocaleString("id-ID");
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fmt=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+const todayStr=()=>fmt(new Date());
+const parse=s=>{const [y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d)};
+const addDays=(s,n)=>{const d=parse(s);d.setDate(d.getDate()+n);return fmt(d)};
+const tglIndo=s=>parse(s).toLocaleDateString("id-ID",{day:"numeric",month:"short"});
+
+/* ---------- Tab ---------- */
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("on",x===b));
+  document.querySelectorAll("section").forEach(s=>s.classList.toggle("on",s.id===b.dataset.tab));
+  if(b.dataset.tab==="stok")renderStok();
+  if(b.dataset.tab==="biaya")renderExp();
+  if(b.dataset.tab==="rekap")renderRekap();
+  if(b.dataset.tab==="atur")renderAtur();
+  updateBar();
+  window.scrollTo(0,0);
+});
+function applyToko(){
+  $("#judul").textContent="🫓 "+(setting.nama||"Martabak POS");
+  document.title=setting.nama||"Martabak POS";
+}
+
+/* ---------- Bahan, resep, HPP ---------- */
+const angka=n=>Number(n||0).toLocaleString("id-ID",{maximumFractionDigits:2});
+const r3=x=>Math.round(x*1000)/1000;
+const bahanById=id=>bahan.find(b=>String(b.id)===String(id));
+function hppMenu(m){
+  return (m.resep||[]).reduce((s,r)=>{const b=bahanById(r.bahanId);return s+(b?b.harga*r.qty:0)},0);
+}
+function maxPorsi(m){
+  const r=(m.resep||[]).filter(x=>bahanById(x.bahanId)&&x.qty>0);
+  if(!r.length)return null;
+  return Math.max(0,Math.min(...r.map(x=>Math.floor(bahanById(x.bahanId).stok/x.qty+1e-9))));
+}
+function kebutuhan(items){
+  const k={};
+  items.forEach(i=>(i.resep||[]).forEach(r=>{k[r.bahanId]=(k[r.bahanId]||0)+r.qty*i.qty}));
+  return k;
+}
+function bahanKurang(k){
+  return Object.entries(k).map(([id,q])=>({b:bahanById(id),q})).filter(x=>x.b&&x.b.stok<x.q-1e-9);
+}
+function potongStok(items){
+  const kb=kebutuhan(items);
+  Object.entries(kb).forEach(([id,q])=>{const b=bahanById(id);if(b)b.stok=Math.max(0,r3(b.stok-q))});
+  if(Object.keys(kb).length){save("mb_bahan",bahan);antri({type:"bahan",data:bahan})}
+}
+function sisaTag(m){
+  const mp=maxPorsi(m);
+  return mp!==null&&mp<=10?`<span class="sisa ${mp===0?"habis":mp<=5?"tipis":""}">${mp===0?"Bahan habis":"Sisa ±"+mp+" porsi"}</span>`:"";
+}
+function renderPeringatan(){
+  const low=bahan.filter(b=>b.min>0&&b.stok<=b.min);
+  const el=$("#stokWarn");
+  el.hidden=!low.length;
+  if(low.length)el.textContent="⚠️ Stok menipis: "+low.map(b=>b.nama).join(", ")+" (ketuk untuk lihat)";
+}
+$("#stokWarn").onclick=()=>document.querySelector("nav button[data-tab=stok]").click();
+
+/* ---------- Kasir ---------- */
+document.querySelectorAll("#filter .chip").forEach(c=>c.onclick=()=>{
+  filterJenis=c.dataset.f;
+  document.querySelectorAll("#filter .chip").forEach(x=>x.classList.toggle("on",x===c));
+  renderMenu();
+});
+function renderMenu(){
+  const list=menu.filter(m=>filterJenis==="semua"||m.jenis===filterJenis);
+  $("#menuGrid").innerHTML=list.map(m=>`
+    <button class="item" data-id="${m.id}">
+      ${cart[m.id]?`<span class="badge">${cart[m.id]}</span>`:""}
+      <span class="tag ${m.jenis}">${m.jenis==="manis"?"Manis":"Asin"}</span>
+      <b>${esc(m.nama)}</b><span>${rp(m.harga)}</span>${sisaTag(m)}
+    </button>`).join("")||`<p class="note">Tidak ada menu. Tambahkan di tab Atur.</p>`;
+  document.querySelectorAll(".item").forEach(b=>b.onclick=()=>{
+    const id=b.dataset.id;cart[id]=(cart[id]||0)+1;renderCart();
+  });
+  renderPeringatan();
+}
+function cartItems(){
+  return Object.entries(cart).map(([id,q])=>{
+    const m=menu.find(x=>x.id==id);return m?{...m,qty:q}:null;
+  }).filter(Boolean);
+}
+const subtotal=()=>cartItems().reduce((a,i)=>a+i.harga*i.qty,0);
+const diskonVal=()=>Math.min(Math.max(Number($("#diskon").value)||0,0),subtotal());
+const cartTotal=()=>subtotal()-diskonVal();
+
+function renderCart(){
+  const items=cartItems();
+  $("#cart").innerHTML=items.length?items.map(i=>`
+    <div class="row">
+      <div><b>${esc(i.nama)}</b><div class="note">${rp(i.harga)}</div></div>
+      <div class="qty">
+        <button data-act="-" data-id="${i.id}" aria-label="Kurangi">−</button>
+        <span>${i.qty}</span>
+        <button data-act="+" data-id="${i.id}" aria-label="Tambah">+</button>
+      </div>
+    </div>`).join(""):`<p class="note" style="padding:8px 0">Belum ada pesanan. Ketuk menu di atas untuk menambah.</p>`;
+  $("#cart").querySelectorAll("button").forEach(b=>b.onclick=()=>{
+    const id=b.dataset.id;
+    cart[id]=(cart[id]||0)+(b.dataset.act==="+"?1:-1);
+    if(cart[id]<=0)delete cart[id];
+    renderCart();
+  });
+  hitung();
+  renderMenu();
+}
+function hitung(){
+  $("#subtotal").textContent=rp(subtotal());
+  $("#total").textContent=rp(cartTotal());
+  $("#btnBayar").disabled=!cartItems().length;
+  updateBar();
+}
+function updateBar(){
+  const on=$("#kasir").classList.contains("on")&&cartTotal()>0;
+  $("#bar").classList.toggle("on",on);
+  $("#btnBarBayar").textContent="Bayar "+rp(cartTotal());
+}
+$("#diskon").oninput=hitung;
+function resetForm(){
+  cart={};$("#diskon").value="";$("#pelanggan").value="";$("#catatan").value="";renderCart();
+}
+$("#btnKosong").onclick=resetForm;
+$("#btnBayar").onclick=bayar;
+$("#btnBarBayar").onclick=bayar;
+
+function bayar(){
+  const metode=document.querySelector("input[name=pay]:checked").value;
+  const total=cartTotal();
+  if(!cartItems().length)return;
+  if(total<=0&&!confirm("Total Rp0. Tetap simpan transaksi?"))return;
+  const kurang=bahanKurang(kebutuhan(cartItems()));
+  if(kurang.length&&!confirm("Stok bahan tidak cukup:\n"+kurang.map(x=>"• "+x.b.nama+": butuh "+angka(x.q)+" "+x.b.satuan+", ada "+angka(x.b.stok)).join("\n")+"\n\nTetap lanjutkan? (stok menjadi 0)"))return;
+  metode==="Tunai"?modalTunai(total):modalQris(total);
+}
+
+/* ---------- Modal ---------- */
+function showModal(html){$("#modalBox").innerHTML=html;$("#modal").classList.add("on")}
+function closeModal(){$("#modal").classList.remove("on");$("#modalBox").innerHTML=""}
+window.closeModal=closeModal;
+
+function modalTunai(total){
+  showModal(`
+    <h3>Pembayaran tunai</h3>
+    <div class="total"><span>Total</span><span>${rp(total)}</span></div>
+    <input type="number" id="uang" inputmode="numeric" placeholder="Uang diterima">
+    <div class="chips" style="margin-top:8px;justify-content:center" id="cepat"></div>
+    <p class="note" id="kembali">Kembalian: -</p>
+    <button class="btn green" id="ok" style="margin-top:12px">Selesai</button>
+    <button class="btn alt" onclick="closeModal()">Batal</button>`);
+  const opsi=[...new Set([total,Math.ceil(total/10000)*10000,Math.ceil(total/50000)*50000,Math.ceil(total/100000)*100000])].filter(x=>x>0);
+  $("#cepat").innerHTML=opsi.map(v=>`<button class="chip" data-v="${v}">${rp(v)}</button>`).join("");
+  const upd=()=>{
+    const k=Number($("#uang").value)-total;
+    $("#kembali").textContent=$("#uang").value?(k>=0?"Kembalian: "+rp(k):"Uang kurang "+rp(-k)):"Kembalian: -";
+  };
+  $("#cepat").querySelectorAll("button").forEach(b=>b.onclick=()=>{$("#uang").value=b.dataset.v;upd()});
+  $("#uang").oninput=upd;
+  $("#ok").onclick=()=>{
+    const u=Number($("#uang").value||0);
+    if(u<total&&!confirm("Uang kurang dari total. Tetap simpan?"))return;
+    simpanTrx("Tunai",total,u);
+  };
+}
+
+function modalQris(total){
+  let body="";
+  if(qrisStatic)body=`<div id="qrBox"></div><p class="note">Nominal ${rp(total)} sudah tertanam di QR.</p>`;
+  else if(qrisImg)body=`<img src="${qrisImg}" alt="QRIS toko" style="max-width:100%;border-radius:8px"><p class="note">Pembeli mengisi nominal ${rp(total)} sendiri.</p>`;
+  else body=`<p class="err">QRIS belum diatur. Buka tab Atur.</p>`;
+  showModal(`
+    <h3>Bayar dengan QRIS</h3>
+    <div class="total"><span>Total</span><span>${rp(total)}</span></div>
+    ${body}
+    <button class="btn green" id="ok">Pembayaran sudah masuk</button>
+    <button class="btn alt" onclick="closeModal()">Batal</button>`);
+  if(qrisStatic){
+    try{
+      if(typeof QRCode==="undefined")throw new Error("Library QR belum termuat. Periksa koneksi internet.");
+      new QRCode($("#qrBox"),{text:buatQrisDinamis(qrisStatic,total),width:240,height:240,correctLevel:QRCode.CorrectLevel.M});
+    }catch(e){$("#qrBox").innerHTML=`<p class="err">${esc(e.message)}</p>`}
+  }
+  $("#ok").onclick=()=>simpanTrx("QRIS",total,total);
+}
+
+function simpanTrx(metode,total,bayar){
+  const items=cartItems().map(i=>({nama:i.nama,jenis:i.jenis,harga:i.harga,qty:i.qty,hpp:hppMenu(i),resep:(i.resep||[]).map(r=>({bahanId:r.bahanId,qty:r.qty}))}));
+  const now=new Date();
+  const t={
+    id:Date.now(),tanggal:todayStr(),jam:now.toTimeString().slice(0,5),
+    pelanggan:$("#pelanggan").value.trim(),catatan:$("#catatan").value.trim(),
+    metode,subtotal:subtotal(),diskon:diskonVal(),total,bayar,items,
+    hpp:items.reduce((s,i)=>s+i.hpp*i.qty,0)
+  };
+  potongStok(items);
+  trx.push(t);save("mb_trx",trx);antri({type:"trx",data:t});
+  resetForm();
+  tampilStruk(t);
+}
+
+/* ---------- Struk ---------- */
+function teksStruk(t){
+  const L=[];
+  L.push(setting.nama||"Martabak POS");
+  if(setting.alamat)L.push(setting.alamat);
+  L.push(`${tglIndo(t.tanggal)} ${t.jam}`+(t.pelanggan?` - ${t.pelanggan}`:""));
+  L.push("");
+  t.items.forEach(i=>L.push(`${i.nama} x${i.qty} = ${rp(i.harga*i.qty)}`));
+  if(t.diskon)L.push(`Diskon: -${rp(t.diskon)}`);
+  L.push(`Total: ${rp(t.total)} (${t.metode})`);
+  if(t.catatan)L.push(`Catatan: ${t.catatan}`);
+  if(setting.footer)L.push("",setting.footer);
+  return L.join("\n");
+}
+function tampilStruk(t){
+  const kembali=t.metode==="Tunai"&&t.bayar>=t.total?t.bayar-t.total:0;
+  showModal(`
+    <div class="struk" id="struk">
+      <div class="c"><b>${esc(setting.nama||"Martabak POS")}</b><br>${esc(setting.alamat||"")}</div>
+      <hr>
+      <div>${tglIndo(t.tanggal)} ${t.jam}${t.pelanggan?" · "+esc(t.pelanggan):""}</div>
+      <hr>
+      ${t.items.map(i=>`<div class="l"><span>${esc(i.nama)} x${i.qty}</span><span>${rp(i.harga*i.qty)}</span></div>`).join("")}
+      <hr>
+      ${t.diskon?`<div class="l"><span>Diskon</span><span>-${rp(t.diskon)}</span></div>`:""}
+      <div class="l"><b>Total</b><b>${rp(t.total)}</b></div>
+      <div class="l"><span>${t.metode}</span><span>${t.metode==="Tunai"?rp(t.bayar):""}</span></div>
+      ${kembali?`<div class="l"><span>Kembali</span><span>${rp(kembali)}</span></div>`:""}
+      ${t.catatan?`<hr><div>Catatan: ${esc(t.catatan)}</div>`:""}
+      <hr><div class="c">${esc(setting.footer||"")}</div>
+    </div>
+    <p class="note noprint" style="margin-top:10px">✅ Transaksi tersimpan.</p>
+    <button class="btn noprint" id="prn" style="margin-top:8px">Cetak struk</button>
+    <button class="btn alt noprint" id="wa">Kirim lewat WhatsApp</button>
+    <button class="btn alt noprint" onclick="closeModal()">Tutup</button>`);
+  $("#prn").onclick=()=>window.print();
+  $("#wa").onclick=()=>window.open("https://wa.me/?text="+encodeURIComponent(teksStruk(t)),"_blank");
+}
+
+/* ---------- QRIS statis -> dinamis ---------- */
+function crc16(str){
+  let crc=0xFFFF;
+  for(let i=0;i<str.length;i++){
+    crc^=str.charCodeAt(i)<<8;
+    for(let j=0;j<8;j++)crc=(crc&0x8000)?((crc<<1)^0x1021):(crc<<1);
+    crc&=0xFFFF;
+  }
+  return crc.toString(16).toUpperCase().padStart(4,"0");
+}
+function buatQrisDinamis(statik,nominal){
+  let s=statik.trim();
+  if(!s.startsWith("000201"))throw new Error("Teks QRIS tidak valid (harus diawali 000201).");
+  s=s.slice(0,-8);
+  s=s.replace("010211","010212");
+  const amt=String(Math.round(nominal));
+  const tag54="54"+String(amt.length).padStart(2,"0")+amt;
+  const i=s.indexOf("5802ID");
+  if(i<0)throw new Error("Format QRIS tidak dikenali (tag 5802ID tidak ditemukan).");
+  s=s.slice(0,i)+tag54+s.slice(i);
+  s+="6304";
+  return s+crc16(s);
+}
+
+/* ---------- Stok & resep (tampilan) ---------- */
+function renderStok(){
+  const low=bahan.filter(b=>b.min>0&&b.stok<=b.min);
+  $("#stokPeringatan").innerHTML=low.length?`<div class="warnbar" style="cursor:default">⚠️ Stok menipis: ${low.map(b=>esc(b.nama)).join(", ")}</div>`:"";
+  const tb='style="border:0;background:none;cursor:pointer"';
+  $("#tblBahan").innerHTML=`<tr><th>Bahan</th><th class="r">Stok</th><th class="r">Modal/satuan</th><th></th></tr>`+
+    (bahan.length?bahan.map(b=>`<tr>
+      <td>${esc(b.nama)}</td>
+      <td class="r ${b.min>0&&b.stok<=b.min?"low":""}">${angka(b.stok)} ${esc(b.satuan)}</td>
+      <td class="r">${rp(b.harga)}</td>
+      <td style="white-space:nowrap">
+        <button onclick="isiStok(${b.id})" ${tb} aria-label="Isi stok">➕</button>
+        <button onclick="formBahan(${b.id})" ${tb} aria-label="Edit bahan">✏️</button>
+        <button onclick="hapusBahan(${b.id})" ${tb} aria-label="Hapus bahan">🗑️</button></td></tr>`).join(""):`<tr><td colspan="4">Belum ada bahan. Ketuk “Tambah bahan”.</td></tr>`);
+  const rows=menu.map(m=>{
+    if(!(m.resep||[]).length)return `<tr><td>${esc(m.nama)}</td><td class="r">${rp(m.harga)}</td><td colspan="2" class="r"><small>Resep belum diatur</small></td></tr>`;
+    const h=hppMenu(m),lb=m.harga-h,mg=m.harga?Math.round(lb/m.harga*100):0;
+    return `<tr><td>${esc(m.nama)}</td><td class="r">${rp(m.harga)}</td><td class="r">${rp(Math.round(h))}</td><td class="r ${lb<0?"low":""}">${rp(Math.round(lb))} <small>(${mg}%)</small></td></tr>`;
+  });
+  $("#tblHpp").innerHTML=`<tr><th>Menu</th><th class="r">Harga</th><th class="r">HPP</th><th class="r">Laba/porsi</th></tr>`+(rows.join("")||`<tr><td colspan="4">Belum ada menu.</td></tr>`);
+}
+$("#btnBahanBaru").onclick=()=>formBahan(null);
+
+window.formBahan=id=>{
+  const b=id?bahanById(id):{nama:"",satuan:"gram",harga:"",stok:"",min:""};
+  if(id&&!b)return;
+  showModal(`
+    <h3>${id?"Edit bahan":"Tambah bahan"}</h3>
+    <div style="text-align:left">
+      <label class="lbl">Nama bahan</label><input type="text" id="fbNama" value="${esc(b.nama)}" placeholder="mis. Tepung terigu">
+      <label class="lbl">Satuan</label><input type="text" id="fbSatuan" value="${esc(b.satuan)}" placeholder="gram, ml, butir, pcs">
+      <label class="lbl">Harga per satuan (Rp)</label><input type="number" id="fbHarga" inputmode="decimal" step="any" value="${b.harga}" placeholder="mis. 12 (Rp12 per gram)">
+      <label class="lbl">Stok sekarang</label><input type="number" id="fbStok" inputmode="decimal" step="any" value="${b.stok}">
+      <label class="lbl">Batas minimum (peringatan)</label><input type="number" id="fbMin" inputmode="decimal" step="any" value="${b.min||""}" placeholder="opsional">
+    </div>
+    <button class="btn green" id="fbOk" style="margin-top:14px">Simpan</button>
+    <button class="btn alt" onclick="closeModal()">Batal</button>`);
+  $("#fbOk").onclick=()=>{
+    const nama=$("#fbNama").value.trim(),satuan=$("#fbSatuan").value.trim();
+    const harga=Number($("#fbHarga").value),stok=Number($("#fbStok").value||0),min=Number($("#fbMin").value||0);
+    if(!nama||!satuan)return alert("Nama dan satuan wajib diisi.");
+    if($("#fbHarga").value===""||!(harga>=0))return alert("Isi harga per satuan (boleh 0).");
+    if(!(stok>=0)||!(min>=0))return alert("Stok dan minimum tidak boleh negatif.");
+    if(id)Object.assign(b,{nama,satuan,harga,stok,min});
+    else bahan.push({id:Date.now(),nama,satuan,harga,stok,min});
+    save("mb_bahan",bahan);antri({type:"bahan",data:bahan});
+    closeModal();renderStok();renderMenu();
+  };
+};
+
+window.isiStok=id=>{
+  const b=bahanById(id);if(!b)return;
+  showModal(`
+    <h3>Isi stok: ${esc(b.nama)}</h3>
+    <p class="note">Stok sekarang ${angka(b.stok)} ${esc(b.satuan)}</p>
+    <div style="text-align:left">
+      <label class="lbl">Jumlah masuk (${esc(b.satuan)})</label><input type="number" id="fsJml" inputmode="decimal" step="any">
+      <label class="lbl">Total harga belanja (Rp, opsional)</label><input type="number" id="fsTotal" inputmode="numeric">
+      <label style="display:flex;gap:8px;align-items:center;margin-top:12px"><input type="checkbox" id="fsHarga" checked style="width:auto"> Perbarui modal per satuan dari belanja ini</label>
+      <label style="display:flex;gap:8px;align-items:center;margin-top:8px"><input type="checkbox" id="fsCatat" checked style="width:auto"> Catat sebagai pengeluaran “Bahan baku”</label>
+    </div>
+    <button class="btn green" id="fsOk" style="margin-top:14px">Tambah stok</button>
+    <button class="btn alt" onclick="closeModal()">Batal</button>`);
+  $("#fsOk").onclick=()=>{
+    const jml=Number($("#fsJml").value),total=Number($("#fsTotal").value||0);
+    if(!(jml>0))return alert("Isi jumlah yang masuk.");
+    b.stok=r3(b.stok+jml);
+    if(total>0){
+      if($("#fsHarga").checked)b.harga=total/jml;
+      if($("#fsCatat").checked){
+        const x={id:Date.now(),tanggal:todayStr(),kategori:"Bahan baku",nominal:total,catatan:"Beli "+b.nama+" "+angka(jml)+" "+b.satuan};
+        exp.push(x);save("mb_exp",exp);antri({type:"exp",data:x});
+      }
+    }
+    save("mb_bahan",bahan);antri({type:"bahan",data:bahan});
+    closeModal();renderStok();renderMenu();
+  };
+};
+
+window.hapusBahan=id=>{
+  const b=bahanById(id);if(!b)return;
+  const dipakai=menu.filter(m=>(m.resep||[]).some(r=>String(r.bahanId)===String(id)));
+  if(!confirm("Hapus bahan "+b.nama+"?"+(dipakai.length?"\nBahan ini dipakai di resep: "+dipakai.map(m=>m.nama).join(", ")+". Bahan akan dikeluarkan dari resep itu.":"")))return;
+  bahan=bahan.filter(x=>String(x.id)!==String(id));
+  save("mb_bahan",bahan);antri({type:"bahan",data:bahan});
+  if(dipakai.length){
+    menu.forEach(m=>{m.resep=(m.resep||[]).filter(r=>String(r.bahanId)!==String(id))});
+    save("mb_menu",menu);antri({type:"menu",data:menu});
+  }
+  renderStok();renderMenu();
+};
+
+window.formResep=i=>{
+  ambilMenu();
+  const m=menu[i];if(!m)return;
+  if(!bahan.length){
+    showModal(`<h3>Resep: ${esc(m.nama)}</h3><p class="note">Belum ada bahan. Tambahkan bahan dulu di tab Stok.</p><button class="btn alt" onclick="closeModal()">Tutup</button>`);
+    return;
+  }
+  let tmp=(m.resep||[]).filter(r=>bahanById(r.bahanId)).map(r=>({bahanId:r.bahanId,qty:r.qty}));
+  showModal(`
+    <h3>Resep: ${esc(m.nama)}</h3>
+    <p class="note">Isi bahan yang dipakai untuk 1 porsi.</p>
+    <div id="rsList" style="text-align:left"></div>
+    <div class="two" style="margin-top:10px">
+      <select id="rsBahan">${bahan.map(b=>`<option value="${b.id}">${esc(b.nama)} (${esc(b.satuan)})</option>`).join("")}</select>
+      <input type="number" id="rsQty" inputmode="decimal" step="any" placeholder="Jumlah / porsi">
+    </div>
+    <button class="btn alt" id="rsTambah">+ Tambahkan ke resep</button>
+    <div id="rsHpp" class="note" style="margin:12px 0"></div>
+    <button class="btn green" id="rsOk">Simpan resep</button>
+    <button class="btn alt" onclick="closeModal()">Batal</button>`);
+  const gambar=()=>{
+    const h=tmp.reduce((s,r)=>{const b=bahanById(r.bahanId);return s+(b?b.harga*r.qty:0)},0);
+    $("#rsList").innerHTML=tmp.length?tmp.map((r,k)=>{
+      const b=bahanById(r.bahanId);
+      return `<div class="row"><span>${esc(b.nama)}: ${angka(r.qty)} ${esc(b.satuan)} <small>(${rp(Math.round(b.harga*r.qty))})</small></span><button data-k="${k}" style="border:0;background:none;cursor:pointer" aria-label="Hapus dari resep">🗑️</button></div>`;
+    }).join(""):`<p class="note">Belum ada bahan di resep.</p>`;
+    $("#rsList").querySelectorAll("button").forEach(x=>x.onclick=()=>{tmp.splice(Number(x.dataset.k),1);gambar()});
+    const lb=m.harga-h;
+    $("#rsHpp").innerHTML=`HPP: <b>${rp(Math.round(h))}</b> · Harga jual: ${rp(m.harga)}<br>Laba per porsi: <b>${rp(Math.round(lb))}</b>${m.harga?" ("+Math.round(lb/m.harga*100)+"%)":""}`;
+  };
+  gambar();
+  $("#rsTambah").onclick=()=>{
+    const id=$("#rsBahan").value,q=Number($("#rsQty").value);
+    if(!(q>0))return alert("Isi jumlah per porsi.");
+    const ada=tmp.find(r=>String(r.bahanId)===String(id));
+    if(ada)ada.qty=q;else tmp.push({bahanId:Number(id),qty:q});
+    $("#rsQty").value="";gambar();
+  };
+  $("#rsOk").onclick=()=>{
+    m.resep=tmp;save("mb_menu",menu);antri({type:"menu",data:menu});
+    closeModal();renderAtur();renderMenu();
+  };
+};
+
+/* ---------- Pengeluaran ---------- */
+$("#expTgl").value=todayStr();
+$("#expTgl").onchange=renderExp;
+let draftExp=[];
+function bacaFormExp(){
+  const n=Number($("#expNominal").value);
+  if(!(n>0))return null;
+  return {kategori:$("#expKat").value,nominal:n,catatan:$("#expCatatan").value.trim()};
+}
+function kosongFormExp(){$("#expNominal").value="";$("#expCatatan").value="";$("#expNominal").focus()}
+function renderDraft(){
+  $("#draftBox").hidden=!draftExp.length;
+  $("#draftList").innerHTML=draftExp.map((x,i)=>`
+    <div class="row">
+      <div><b>${esc(x.kategori)}</b>${x.catatan?`<div class="note" style="margin:0">${esc(x.catatan)}</div>`:""}</div>
+      <div style="display:flex;align-items:center;gap:8px"><span>${rp(x.nominal)}</span>
+        <button data-i="${i}" style="border:0;background:none;cursor:pointer;font-size:1rem" aria-label="Hapus dari daftar">✕</button></div>
+    </div>`).join("");
+  $("#draftList").querySelectorAll("button").forEach(b=>b.onclick=()=>{draftExp.splice(Number(b.dataset.i),1);renderDraft()});
+  $("#draftTotal").textContent=rp(draftExp.reduce((a,x)=>a+x.nominal,0));
+  $("#btnExp").textContent=draftExp.length?"Simpan "+draftExp.length+" pengeluaran":"Simpan pengeluaran";
+}
+$("#btnExpTambah").onclick=()=>{
+  const x=bacaFormExp();
+  if(!x)return alert("Isi nominal pengeluaran.");
+  draftExp.push(x);kosongFormExp();renderDraft();$("#expMsg").textContent="";
+};
+$("#btnExp").onclick=()=>{
+  const x=bacaFormExp();            // isian yang belum ditambahkan ikut disimpan
+  if(x)draftExp.push(x);
+  if(!draftExp.length)return alert("Isi nominal pengeluaran.");
+  const tgl=$("#expTgl").value||todayStr(),dasar=Date.now();
+  draftExp.forEach((d,i)=>{
+    const e={id:dasar+i,tanggal:tgl,kategori:d.kategori,nominal:d.nominal,catatan:d.catatan};
+    exp.push(e);antri({type:"exp",data:e});
+  });
+  save("mb_exp",exp);
+  const n=draftExp.length,tot=draftExp.reduce((a,y)=>a+y.nominal,0);
+  draftExp=[];kosongFormExp();renderDraft();renderExp();
+  $("#expMsg").textContent="✅ "+n+" pengeluaran tersimpan, total "+rp(tot)+".";
+};
+function renderExp(){
+  const d=$("#expTgl").value||todayStr();
+  const list=exp.filter(e=>e.tanggal===d);
+  $("#expTotal").textContent=rp(list.reduce((a,e)=>a+e.nominal,0));
+  $("#tblExp").innerHTML=`<tr><th>Kategori</th><th>Catatan</th><th class="r">Nominal</th><th></th></tr>`+
+    (list.length?list.map(e=>`<tr><td>${esc(e.kategori)}</td><td>${esc(e.catatan)}</td><td class="r">${rp(e.nominal)}</td>
+      <td><button onclick="hapusExp(${e.id})" style="border:0;background:none;cursor:pointer" aria-label="Hapus pengeluaran">🗑️</button></td></tr>`).join(""):`<tr><td colspan="4">Belum ada pengeluaran.</td></tr>`);
+}
+window.hapusExp=id=>{
+  if(!confirm("Hapus pengeluaran ini?"))return;
+  exp=exp.filter(e=>e.id!==id);save("mb_exp",exp);antri({type:"delExp",id});renderExp();
+};
+
+/* ---------- Rekap ---------- */
+$("#dari").value=$("#sampai").value=todayStr();
+$("#dari").onchange=$("#sampai").onchange=renderRekap;
+document.querySelectorAll("#periode .chip").forEach(c=>c.onclick=()=>{
+  periode=c.dataset.p;
+  document.querySelectorAll("#periode .chip").forEach(x=>x.classList.toggle("on",x===c));
+  $("#kustomBox").style.display=periode==="kustom"?"grid":"none";
+  renderRekap();
+});
+function getRange(){
+  const t=todayStr();
+  if(periode==="hari")return [t,t];
+  if(periode==="7")return [addDays(t,-6),t];
+  if(periode==="bulan")return [t.slice(0,8)+"01",t];
+  let a=$("#dari").value||t,b=$("#sampai").value||t;
+  if(a>b)[a,b]=[b,a];
+  return [a,b];
+}
+function renderRekap(){
+  const [a,b]=getRange();
+  const inR=x=>x.tanggal>=a&&x.tanggal<=b;
+  const list=trx.filter(inR),pengeluaran=exp.filter(inR);
+  const omzet=list.reduce((s,t)=>s+t.total,0);
+  const biaya=pengeluaran.reduce((s,e)=>s+e.nominal,0);
+  const laba=omzet-biaya;
+  const hpp=list.reduce((s,t)=>s+t.items.reduce((x,i)=>x+(i.hpp||0)*i.qty,0),0);
+  const kotor=omzet-hpp;
+  const margin=omzet?Math.round(kotor/omzet*100):0;
+  const by=m=>list.filter(t=>t.metode===m).reduce((s,t)=>s+t.total,0);
+  const porsi=list.reduce((s,t)=>s+t.items.reduce((x,i)=>x+i.qty,0),0);
+  $("#stats").innerHTML=`
+    <div class="stat"><small>Omzet</small><div>${rp(omzet)}</div></div>
+    <div class="stat"><small>Pengeluaran</small><div>${rp(biaya)}</div></div>
+    <div class="stat wide ${laba>=0?"profit":"loss"}"><small>${laba>=0?"Laba kas":"Rugi kas"} (omzet − pengeluaran)</small><div>${rp(laba)}</div></div>
+    <div class="stat"><small>Modal bahan (HPP)</small><div>${rp(Math.round(hpp))}</div></div>
+    <div class="stat ${kotor>=0?"profit":"loss"}"><small>Laba kotor (${margin}%)</small><div>${rp(Math.round(kotor))}</div></div>
+    <div class="stat"><small>Tunai</small><div>${rp(by("Tunai"))}</div></div>
+    <div class="stat"><small>QRIS</small><div>${rp(by("QRIS"))}</div></div>
+    <div class="stat"><small>Transaksi</small><div>${list.length}</div></div>
+    <div class="stat"><small>Total porsi</small><div>${porsi}</div></div>
+    <p class="note" style="grid-column:1/-1">Laba kotor = omzet − HPP (modal bahan dari yang terjual). Laba kas = omzet − pengeluaran yang dicatat. Transaksi lama tanpa resep dihitung HPP Rp0.</p>`;
+  renderChart(a,b);
+
+  const agg={};
+  list.forEach(t=>t.items.forEach(i=>{
+    const k=i.nama+"|"+i.jenis;
+    agg[k]=agg[k]||{nama:i.nama,jenis:i.jenis,qty:0,omzet:0,hpp:0};
+    agg[k].qty+=i.qty;agg[k].omzet+=i.qty*i.harga;agg[k].hpp+=(i.hpp||0)*i.qty;
+  }));
+  const rows=Object.values(agg).sort((x,y)=>y.qty-x.qty);
+  $("#tblItem").innerHTML=`<tr><th>Menu</th><th class="r">Qty</th><th class="r">Omzet</th><th class="r">Laba</th></tr>`+
+    (rows.length?rows.map(r=>`<tr><td>${esc(r.nama)} <small>(${r.jenis})</small></td><td class="r">${r.qty}</td><td class="r">${rp(r.omzet)}</td><td class="r">${rp(Math.round(r.omzet-r.hpp))}</td></tr>`).join(""):`<tr><td colspan="4">Belum ada penjualan.</td></tr>`);
+
+  $("#tblTrx").innerHTML=`<tr><th>Waktu</th><th>Pesanan</th><th>Bayar</th><th class="r">Total</th><th></th></tr>`+
+    (list.length?list.slice().reverse().map(t=>`<tr>
+      <td>${tglIndo(t.tanggal)}<br>${t.jam}</td>
+      <td>${t.items.map(i=>esc(i.nama)+" ×"+i.qty).join(", ")}${t.pelanggan?`<br><small>${esc(t.pelanggan)}</small>`:""}</td>
+      <td>${t.metode}</td><td class="r">${rp(t.total)}</td>
+      <td style="white-space:nowrap">
+        <button onclick="lihatStruk(${t.id})" style="border:0;background:none;cursor:pointer" aria-label="Lihat struk">🧾</button>
+        <button onclick="hapusTrx(${t.id})" style="border:0;background:none;cursor:pointer" aria-label="Hapus transaksi">🗑️</button></td></tr>`).join(""):`<tr><td colspan="5">Belum ada transaksi.</td></tr>`);
+}
+function renderChart(a,b){
+  const days=[];
+  for(let d=a,n=0;d<=b&&n<62;d=addDays(d,1),n++)days.push(d);
+  $("#chartWrap").style.display=days.length>1?"block":"none";
+  if(days.length<2)return;
+  const om=days.map(d=>trx.filter(t=>t.tanggal===d).reduce((s,t)=>s+t.total,0));
+  const bi=days.map(d=>exp.filter(e=>e.tanggal===d).reduce((s,e)=>s+e.nominal,0));
+  const max=Math.max(1,...om,...bi);
+  const bw=Math.max(14,Math.min(36,520/days.length));
+  const W=days.length*bw*2.2+20,H=170,base=140;
+  let svg=`<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Grafik omzet dan pengeluaran per hari">`;
+  days.forEach((d,i)=>{
+    const x=10+i*bw*2.2;
+    const h1=om[i]/max*(base-14),h2=bi[i]/max*(base-14);
+    svg+=`<rect x="${x}" y="${base-h1}" width="${bw*.9}" height="${h1}" fill="#d99a1c" rx="2"/>`;
+    svg+=`<rect x="${x+bw*.95}" y="${base-h2}" width="${bw*.9}" height="${h2}" fill="#b3402a" rx="2"/>`;
+    if(days.length<=14||i%Math.ceil(days.length/12)===0)
+      svg+=`<text x="${x+bw*.9}" y="${base+16}" font-size="10" text-anchor="middle" fill="#7a6a5f">${tglIndo(d)}</text>`;
+  });
+  svg+=`<line x1="6" y1="${base}" x2="${W-6}" y2="${base}" stroke="#e4dac8"/></svg>`;
+  $("#chart").innerHTML=svg;
+}
+window.hapusTrx=id=>{
+  if(!confirm("Hapus transaksi ini?"))return;
+  const tt=trx.find(x=>x.id===id);
+  if(tt){
+    const kb=kebutuhan(tt.items);
+    if(Object.keys(kb).length&&confirm("Kembalikan stok bahan dari transaksi ini?")){
+      Object.entries(kb).forEach(([bid,q])=>{const b=bahanById(bid);if(b)b.stok=r3(b.stok+q)});
+      save("mb_bahan",bahan);antri({type:"bahan",data:bahan});
+    }
+  }
+  trx=trx.filter(t=>t.id!==id);save("mb_trx",trx);antri({type:"delTrx",id});renderRekap();
+};
+window.lihatStruk=id=>{const t=trx.find(x=>x.id===id);if(t)tampilStruk(t)};
+$("#btnCsv").onclick=()=>{
+  if(!trx.length&&!exp.length)return alert("Belum ada data.");
+  const q=v=>`"${String(v).replace(/"/g,'""')}"`;
+  const lines=["Jenis,Tanggal,Jam,Metode/Kategori,Menu/Catatan,Qty,Harga,Nilai,HPP"];
+  trx.forEach(t=>t.items.forEach(i=>lines.push(["Penjualan",t.tanggal,t.jam,t.metode,i.nama,i.qty,i.harga,i.qty*i.harga,(i.hpp||0)*i.qty].map(q).join(","))));
+  exp.forEach(e=>lines.push(["Pengeluaran",e.tanggal,"",e.kategori,e.catatan,"","",e.nominal,""].map(q).join(",")));
+  unduh("rekap-martabak-"+todayStr()+".csv","\ufeff"+lines.join("\n"),"text/csv;charset=utf-8");
+};
+function unduh(nama,isi,tipe){
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([isi],{type:tipe}));
+  a.download=nama;a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+}
+
+/* ---------- Pengaturan ---------- */
+function renderAtur(){
+  $("#setNama").value=setting.nama||"";
+  $("#setAlamat").value=setting.alamat||"";
+  $("#setFooter").value=setting.footer||"";
+  $("#menuEdit").innerHTML=menu.map((m,i)=>`
+    <div class="menu-edit">
+      <input type="text" value="${esc(m.nama)}" data-i="${i}" data-f="nama" placeholder="Nama">
+      <select data-i="${i}" data-f="jenis">
+        <option value="manis" ${m.jenis==="manis"?"selected":""}>Manis</option>
+        <option value="asin" ${m.jenis==="asin"?"selected":""}>Asin</option>
+      </select>
+      <input type="number" value="${m.harga}" data-i="${i}" data-f="harga" inputmode="numeric">
+      <button onclick="hapusMenu(${i})" style="border:0;background:none;cursor:pointer" aria-label="Hapus menu">🗑️</button>
+      <button class="btn alt resepbtn" onclick="formResep(${i})">🧪 Resep · HPP ${rp(Math.round(hppMenu(m)))}${(m.resep||[]).length?"":" (belum diatur)"}</button>
+    </div>`).join("");
+  $("#qrisStr").value=qrisStatic;
+  isiSync();
+}
+window.hapusMenu=i=>{ambilMenu();menu.splice(i,1);renderAtur()};
+function ambilMenu(){
+  document.querySelectorAll("#menuEdit [data-f]").forEach(el=>{
+    const m=menu[el.dataset.i];if(!m)return;
+    m[el.dataset.f]=el.dataset.f==="harga"?Number(el.value)||0:el.value;
+  });
+}
+$("#btnTambah").onclick=()=>{ambilMenu();menu.push({id:Date.now(),nama:"Menu baru",jenis:"manis",harga:0,resep:[]});renderAtur()};
+$("#btnSimpanMenu").onclick=()=>{
+  ambilMenu();save("mb_menu",menu);antri({type:"menu",data:menu});
+  cart={};renderCart();alert("Menu tersimpan.");
+};
+$("#btnSimpanToko").onclick=()=>{
+  setting={nama:$("#setNama").value.trim(),alamat:$("#setAlamat").value.trim(),footer:$("#setFooter").value.trim()};
+  save("mb_set",setting);applyToko();alert("Info toko tersimpan.");
+};
+$("#btnSimpanQris").onclick=()=>{
+  const v=$("#qrisStr").value.trim();
+  if(v&&!v.startsWith("000201")){$("#qrisMsg").textContent="Teks tidak valid, harus diawali 000201.";$("#qrisMsg").className="note err";return}
+  qrisStatic=v;save("mb_qris",v);
+  $("#qrisMsg").className="note";$("#qrisMsg").textContent=v?"QRIS tersimpan.":"QRIS dihapus.";
+};
+$("#qrisImg").onchange=e=>{
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{qrisImg=r.result;save("mb_qrisimg",qrisImg);alert("Gambar QRIS tersimpan.")};
+  r.readAsDataURL(f);
+};
+$("#btnBackup").onclick=()=>{
+  unduh("cadangan-martabak-"+todayStr()+".json",JSON.stringify({menu,trx,exp,bahan,setting,qrisStatic,qrisImg}),"application/json");
+};
+$("#btnRestoreBtn").onclick=()=>$("#restoreFile").click();
+$("#restoreFile").onchange=e=>{
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{
+    try{
+      const d=JSON.parse(r.result);
+      if(!Array.isArray(d.trx)||!Array.isArray(d.menu))throw new Error("Format file tidak sesuai.");
+      if(!confirm("Data saat ini akan diganti dengan isi cadangan. Lanjutkan?"))return;
+      menu=d.menu;trx=d.trx;exp=d.exp||[];bahan=d.bahan||[];setting=d.setting||DEFAULT_SET;
+      qrisStatic=d.qrisStatic||"";qrisImg=d.qrisImg||"";
+      save("mb_menu",menu);save("mb_bahan",bahan);save("mb_trx",trx);save("mb_exp",exp);save("mb_set",setting);
+      save("mb_qris",qrisStatic);save("mb_qrisimg",qrisImg);
+      applyToko();cart={};renderCart();renderAtur();alert("Data berhasil dipulihkan.");
+    }catch(err){alert("Gagal memulihkan: "+err.message)}
+  };
+  r.readAsText(f);e.target.value="";
+};
+$("#btnReset").onclick=()=>{
+  if(confirm("Hapus SEMUA transaksi dan pengeluaran? Tidak bisa dibatalkan. Unduh cadangan dulu jika perlu.")){
+    trx=[];exp=[];save("mb_trx",trx);save("mb_exp",exp);alert("Data dihapus.");
+  }
+};
+
+/* ---------- Pembaruan aplikasi ---------- */
+// Naikkan angka ini setiap kali Anda merilis versi baru, lalu samakan dengan version.json
+const APP_VERSION="1.0.0";
+const cmpVer=(a,b)=>{
+  const x=String(a).split(".").map(Number),y=String(b).split(".").map(Number);
+  for(let i=0;i<Math.max(x.length,y.length);i++){const d=(x[i]||0)-(y[i]||0);if(d)return d>0?1:-1}
+  return 0;
+};
+async function cekUpdate(manual){
+  try{
+    const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});
+    if(!r.ok)throw new Error("HTTP "+r.status);
+    const v=await r.json();
+    if(cmpVer(APP_VERSION,v.minimal||"0")<0){
+      $("#updWajibTeks").textContent=v.catatan||"Perbarui aplikasi untuk melanjutkan.";
+      $("#updWajib").hidden=false;return "wajib";
+    }
+    if(cmpVer(APP_VERSION,v.versi)<0){
+      $("#updTeks").textContent="🔄 Versi "+v.versi+" tersedia"+(v.catatan?": "+v.catatan:"");
+      $("#updBar").hidden=false;return "baru";
+    }
+    $("#updBar").hidden=true;
+    if(manual)alert("Aplikasi sudah versi terbaru ("+APP_VERSION+").");
+    return "terbaru";
+  }catch(e){
+    if(manual)alert("Tidak bisa memeriksa pembaruan. Pastikan terhubung ke internet.");
+    return "gagal";
+  }
+}
+async function terapkanUpdate(){
+  document.querySelectorAll(".btnUpd").forEach(b=>{b.disabled=true;b.textContent="Memperbarui…"});
+  try{
+    if(navigator.serviceWorker){const reg=await navigator.serviceWorker.getRegistration();if(reg)await reg.update()}
+    if(window.caches){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)))}
+  }catch(e){}
+  location.reload();
+}
+document.querySelectorAll(".btnUpd").forEach(b=>b.onclick=terapkanUpdate);
+$("#updNanti").onclick=()=>{$("#updBar").hidden=true};
+$("#btnCekUpdate").onclick=()=>cekUpdate(true);
+$("#verApp").textContent=APP_VERSION;
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")cekUpdate(false)});
+window.addEventListener("online",()=>cekUpdate(false));
+setInterval(()=>cekUpdate(false),30*60*1000);
+cekUpdate(false);
+
+/* ---------- PWA ---------- */
+let promptInstall=null;
+window.addEventListener("beforeinstallprompt",e=>{
+  e.preventDefault();promptInstall=e;$("#btnInstall").style.display="block";
+});
+$("#btnInstall").onclick=async()=>{
+  if(!promptInstall)return;
+  promptInstall.prompt();await promptInstall.userChoice;
+  promptInstall=null;$("#btnInstall").style.display="none";
+};
+if("serviceWorker" in navigator){
+  window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+}
+
+/* ---------- Sinkron Google Sheet ---------- */
+let sync=load("mb_sync",{url:"",token:"",auto:true});
+let queue=load("mb_queue",[]);
+let sedangKirim=false;
+
+function statusSync(pesan,galat){
+  const el=$("#syncBar");
+  if(!sync.url){el.hidden=true;return}
+  el.hidden=false;
+  el.className="syncbar"+(galat?" err":"");
+  el.textContent=pesan||(queue.length?"☁️ "+queue.length+" data menunggu dikirim ke Google Sheet":"☁️ Tersinkron dengan Google Sheet");
+}
+function antri(op){
+  if(!sync.url)return;
+  if(op.type==="menu"||op.type==="bahan")queue=queue.filter(o=>o.type!==op.type);
+  queue.push(op);save("mb_queue",queue);
+  statusSync();
+  if(sync.auto)kirim();
+}
+async function panggil(body){
+  const r=await fetch(sync.url,{
+    method:"POST",
+    headers:{"Content-Type":"text/plain;charset=utf-8"},
+    body:JSON.stringify(Object.assign({token:sync.token},body))
+  });
+  if(!r.ok)throw new Error("HTTP "+r.status);
+  const j=await r.json();
+  if(!j.ok)throw new Error(j.error||"Ditolak server");
+  return j;
+}
+async function kirim(){
+  if(!sync.url||sedangKirim||!queue.length)return;
+  if(!navigator.onLine){statusSync("📴 Offline, data dikirim saat online lagi");return}
+  sedangKirim=true;
+  let berhasil=true;
+  try{
+    while(queue.length){
+      const batch=queue.slice(0,100);
+      await panggil({action:"ops",ops:batch});
+      queue=queue.filter(o=>!batch.includes(o));
+      save("mb_queue",queue);
+      statusSync("☁️ Mengirim… sisa "+queue.length);
+    }
+  }catch(e){
+    berhasil=false;
+    statusSync("⚠️ Gagal kirim: "+e.message+". Akan dicoba lagi.",true);
+  }
+  sedangKirim=false;
+  if(berhasil)statusSync();
+}
+function isiSync(){
+  $("#syncUrl").value=sync.url||"";
+  $("#syncToken").value=sync.token||"";
+  $("#syncAuto").checked=sync.auto!==false;
+  $("#syncInfo").textContent=sync.url?(queue.length?queue.length+" data menunggu dikirim.":"Semua data sudah terkirim."):"Belum terhubung.";
+}
+$("#btnSimpanSync").onclick=async()=>{
+  sync={url:$("#syncUrl").value.trim(),token:$("#syncToken").value.trim(),auto:$("#syncAuto").checked};
+  save("mb_sync",sync);
+  if(!sync.url){statusSync();isiSync();return alert("Sinkron dimatikan (link kosong).")}
+  if(!/^https:\/\/script\.google\.com\/macros\/s\/.+\/exec$/.test(sync.url))
+    return alert("Link tidak sesuai. Harus berbentuk https://script.google.com/macros/s/.../exec");
+  $("#syncInfo").textContent="Menguji koneksi…";
+  try{
+    await panggil({action:"ping"});
+    $("#syncInfo").textContent="✅ Terhubung ke Google Sheet.";
+    statusSync();kirim();
+  }catch(e){
+    $("#syncInfo").textContent="❌ Gagal: "+e.message;
+  }
+};
+$("#btnKirimSemua").onclick=()=>{
+  if(!sync.url)return alert("Simpan link Web App dulu.");
+  if(!confirm("Kirim "+trx.length+" transaksi dan "+exp.length+" pengeluaran ke Sheet? Data yang sudah ada tidak akan dobel."))return;
+  queue=[{type:"menu",data:menu},{type:"bahan",data:bahan},...trx.map(t=>({type:"trx",data:t})),...exp.map(x=>({type:"exp",data:x}))];
+  save("mb_queue",queue);statusSync();kirim().then(isiSync);
+};
+$("#btnAmbil").onclick=async()=>{
+  if(!sync.url)return alert("Simpan link Web App dulu.");
+  $("#syncInfo").textContent="Mengambil data…";
+  try{
+    const j=await panggil({action:"pull"});
+    const idT=new Set(trx.map(t=>String(t.id))),idE=new Set(exp.map(e=>String(e.id)));
+    const baruT=(j.trx||[]).filter(t=>!idT.has(String(t.id)));
+    const baruE=(j.exp||[]).filter(e=>!idE.has(String(e.id)));
+    if(!baruT.length&&!baruE.length&&!(j.menu||[]).length&&!(j.bahan||[]).length){
+      $("#syncInfo").textContent="Sheet kosong atau tidak ada data baru.";return;
+    }
+    if(!confirm("Ditemukan "+baruT.length+" transaksi dan "+baruE.length+" pengeluaran baru di Sheet. Gabungkan ke aplikasi?")){
+      $("#syncInfo").textContent="Dibatalkan.";return;
+    }
+    trx=trx.concat(baruT).sort((a,b)=>a.id-b.id);exp=exp.concat(baruE).sort((a,b)=>a.id-b.id);
+    save("mb_trx",trx);save("mb_exp",exp);
+    if((j.menu||[]).length&&confirm("Ganti daftar menu dengan menu dari Sheet ("+j.menu.length+" menu)?")){
+      menu=j.menu;save("mb_menu",menu);cart={};renderCart();renderAtur();
+    }
+    if((j.bahan||[]).length&&confirm("Ganti data stok bahan dengan data dari Sheet ("+j.bahan.length+" bahan)?")){
+      bahan=j.bahan;save("mb_bahan",bahan);renderCart();
+    }
+    $("#syncInfo").textContent="✅ Data berhasil digabungkan.";
+  }catch(e){$("#syncInfo").textContent="❌ Gagal: "+e.message}
+};
+window.addEventListener("online",kirim);
+
+/* ---------- Mulai ---------- */
+applyToko();renderCart();statusSync();kirim();
+/* ===================================================================
+   FITUR PEMBARUAN APLIKASI
+   Tempel SELURUH blok ini di index.html, pada baris tepat SEBELUM
+   penutup script yang paling bawah (tepat di atas penutup body).
+   =================================================================== */
+(function () {
+  // >>> NAIKKAN ANGKA INI setiap kali merilis versi baru,
+  // >>> dan samakan dengan "versi" di file version.json
+  const APP_VERSION = "1.0.0";
+
+  /* ---- Tampilan (dibuat otomatis, tidak perlu mengubah HTML) ---- */
+  const css = document.createElement("style");
+  css.textContent = `
+    .upd-bar{position:fixed;top:0;left:0;right:0;z-index:9999;background:#f2c230;color:#3a2318;
+      padding:max(8px,env(safe-area-inset-top)) 12px 8px;display:flex;gap:8px;align-items:center;
+      font:600 .88rem "Trebuchet MS","Segoe UI",system-ui,sans-serif;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+    .upd-bar[hidden],.upd-wajib[hidden]{display:none}
+    .upd-bar span{flex:1}
+    .upd-bar button{border:0;border-radius:8px;padding:8px 12px;font:inherit;font-weight:700;cursor:pointer}
+    .upd-bar .upd-go{background:#3a2318;color:#f2c230}
+    .upd-bar .upd-x{background:none;font-size:1rem;padding:6px}
+    .upd-wajib{position:fixed;inset:0;background:rgba(43,27,20,.96);z-index:10000;display:flex;
+      align-items:center;justify-content:center;padding:20px;font-family:"Trebuchet MS","Segoe UI",system-ui,sans-serif}
+    .upd-box{background:#fff;color:#2b1b14;border-radius:14px;padding:22px;max-width:360px;width:100%;text-align:center}
+    .upd-box p{color:#7a6a5f;margin:8px 0 14px;font-size:.9rem}
+    .upd-box .upd-go{width:100%;padding:14px;border:0;border-radius:10px;background:#f2c230;color:#3a2318;
+      font:700 1rem inherit;cursor:pointer}
+  `;
+  document.head.appendChild(css);
+
+  const bar = document.createElement("div");
+  bar.className = "upd-bar"; bar.hidden = true;
+  bar.innerHTML = '<span></span><button class="upd-go">Perbarui</button><button class="upd-x" aria-label="Nanti">✕</button>';
+  const wajib = document.createElement("div");
+  wajib.className = "upd-wajib"; wajib.hidden = true;
+  wajib.innerHTML = '<div class="upd-box"><div style="font-size:2.4rem">🔄</div><h3>Pembaruan diperlukan</h3><p></p><button class="upd-go">Perbarui sekarang</button></div>';
+  document.body.appendChild(bar);
+  document.body.appendChild(wajib);
+
+  /* ---- Logika ---- */
+  function cmp(a, b) {
+    const x = String(a).split(".").map(Number), y = String(b).split(".").map(Number);
+    for (let i = 0; i < Math.max(x.length, y.length); i++) {
+      const d = (x[i] || 0) - (y[i] || 0);
+      if (d) return d > 0 ? 1 : -1;
+    }
+    return 0;
+  }
+
+  async function cekUpdate(manual) {
+    try {
+      const r = await fetch("version.json?t=" + Date.now(), { cache: "no-store" });
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      const v = await r.json();
+      if (cmp(APP_VERSION, v.minimal || "0") < 0) {
+        wajib.querySelector("p").textContent = v.catatan || "Perbarui aplikasi untuk melanjutkan.";
+        wajib.hidden = false;
+        return "wajib";
+      }
+      if (cmp(APP_VERSION, v.versi) < 0) {
+        bar.querySelector("span").textContent = "🔄 Versi " + v.versi + " tersedia" + (v.catatan ? ": " + v.catatan : "");
+        bar.hidden = false;
+        return "baru";
+      }
+      bar.hidden = true;
+      if (manual) alert("Aplikasi sudah versi terbaru (" + APP_VERSION + ").");
+      return "terbaru";
+    } catch (e) {
+      if (manual) alert("Tidak bisa memeriksa pembaruan. Pastikan terhubung ke internet.");
+      return "gagal";
+    }
+  }
+
+  async function terapkan() {
+    document.querySelectorAll(".upd-go").forEach(function (b) { b.disabled = true; b.textContent = "Memperbarui…"; });
+    try {
+      if (navigator.serviceWorker) {
+        const reg = await navigator.serviceWorker.getRegistration();
+        if (reg) await reg.update();
+      }
+      if (window.caches) {
+        const ks = await caches.keys();
+        await Promise.all(ks.map(function (k) { return caches.delete(k); }));
+      }
+    } catch (e) {}
+    location.reload();
+  }
+
+  document.querySelectorAll(".upd-go").forEach(function (b) { b.onclick = terapkan; });
+  bar.querySelector(".upd-x").onclick = function () { bar.hidden = true; };
+
+  /* ---- Tombol "Cek pembaruan" di tab Atur (jika tab Atur ada) ---- */
+  const atur = document.getElementById("atur");
+  if (atur) {
+    const box = document.createElement("div");
+    box.innerHTML =
+      '<h2 style="font-size:1rem;margin:16px 0 8px;color:#7a6a5f">Pembaruan</h2>' +
+      '<p style="font-size:.85rem;color:#7a6a5f;margin-bottom:8px">Versi terpasang: <b>' + APP_VERSION + '</b></p>' +
+      '<button class="upd-cek" style="width:100%;padding:14px;border:1px solid #e4dac8;border-radius:10px;background:#fffdf8;font:inherit;cursor:pointer">Cek pembaruan</button>';
+    atur.appendChild(box);
+    box.querySelector(".upd-cek").onclick = function () { cekUpdate(true); };
+  }
+
+  /* ---- Kapan pengecekan dijalankan ---- */
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState === "visible") cekUpdate(false);
+  });
+  window.addEventListener("online", function () { cekUpdate(false); });
+  setInterval(function () { cekUpdate(false); }, 30 * 60 * 1000);
+  cekUpdate(false);
+})();
+</script>
+</body>
+</html>
