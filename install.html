@@ -86,7 +86,7 @@ details p{color:var(--muted);margin-top:8px;line-height:1.55;font-size:.95rem}
   <!-- Status terpasang -->
   <div id="boxInstalled" hidden>
     <p class="ok" style="font-size:1.1rem">✅ Aplikasi sudah terpasang</p>
-    <a class="btn" href="index.html">Buka aplikasi</a>
+    <a class="btn" href="index.html?app=1">Buka aplikasi</a>
   </div>
 
   <!-- Tombol utama -->
@@ -136,7 +136,7 @@ details p{color:var(--muted);margin-top:8px;line-height:1.55;font-size:.95rem}
 
   <div class="row2">
     <button class="btn ghost" id="btnShare">Bagikan link</button>
-    <a class="btn ghost" href="index.html">Coba dulu</a>
+    <a class="btn ghost" href="index.html?app=1">Coba dulu</a>
   </div>
 
   <div class="chip"><span class="dot" id="dotOff"></span><span id="txtOff">Memeriksa mode offline…</span></div>
@@ -184,6 +184,7 @@ document.querySelectorAll(".seg button").forEach(b=>b.onclick=()=>pilihGuide(b.d
 
 /* Tampilan awal sesuai perangkat */
 if(standalone){
+  location.replace("index.html");   // sudah dibuka dari ikon aplikasi: langsung ke aplikasi
   $("#boxInstall").hidden=true;$("#boxInstalled").hidden=false;
 }else{
   $("#btnGuide").textContent=isAndroid?"Petunjuk instal di Android":"Petunjuk instal di iPhone";
